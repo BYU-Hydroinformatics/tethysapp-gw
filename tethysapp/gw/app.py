@@ -1,5 +1,5 @@
 from tethys_sdk.base import TethysAppBase, url_map_maker
-from tethys_sdk.app_settings import PersistentStoreDatabaseSetting
+from tethys_sdk.app_settings import PersistentStoreDatabaseSetting, CustomSetting
 
 class Gw(TethysAppBase):
     """
@@ -64,6 +64,31 @@ class Gw(TethysAppBase):
                 controller='gw.controllers.addregion'
             ),
             UrlMap(
+                name='finish_addregion',
+                url='gw/finish_addregion',
+                controller='gw.ajax_controllers.finish_addregion'
+            ),
+            UrlMap(
+                name='addregion2',
+                url='addregion2/{region}',
+                controller='gw.controllers.addregion2'
+            ),
+            UrlMap(
+                name='addregion_nwis2',
+                url='addregion_nwis2/{region}',
+                controller='gw.controllers.addregion_nwis2'
+            ),
+            UrlMap(
+                name='removeregion',
+                url='removeregion',
+                controller='gw.controllers.removeregion'
+            ),
+            UrlMap(
+                name='deleteregion',
+                url='gw/deleteregion',
+                controller='gw.ajax_controllers.deleteregion'
+            ),
+            UrlMap(
                 name='create_wells',
                 url='gw/displaygeojson',
                 controller='gw.ajax_controllers.displaygeojson'
@@ -72,11 +97,6 @@ class Gw(TethysAppBase):
                 name='load_well_time',
                 url='gw/loadjson',
                 controller='gw.ajax_controllers.loadjson'
-            ),
-            UrlMap(
-                name='retrieve_wells',
-                url='gw/retrieve_Wells',
-                controller='gw.model.retrieve_Wells'
             ),
             UrlMap(
                 name='loaddata',
@@ -128,6 +148,27 @@ class Gw(TethysAppBase):
                 url='gw/get_timeseries',
                 controller='gw.ajax_controllers.get_timeseries'
             ),
+            UrlMap(
+                name='get_aquifer_wells',
+                url='gw/get_aquifer_wells',
+                controller='gw.model.get_aquifer_wells'
+            ),
         )
 
         return url_maps
+
+    def custom_settings(self):
+        return(
+            CustomSetting(
+                name='thredds_path',
+                type=CustomSetting.TYPE_STRING,
+                description="Local file path to the folder used by the Thredds server",
+                required=True,
+            ),
+            CustomSetting(
+                name='thredds_url',
+                type=CustomSetting.TYPE_STRING,
+                description="Url of the thredds server",
+                required=True,
+            )
+        )

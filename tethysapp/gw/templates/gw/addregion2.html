@@ -1,0 +1,57 @@
+{% extends "gw/base.html" %}
+{% load tethys_gizmos %}
+{% load staticfiles %}
+
+{% block header_buttons %}
+  <div class="header-button glyphicon-button" data-toggle="tooltip" data-placement="bottom" title="Help">
+    <a data-toggle="modal" data-target="#help-modal"><span class="glyphicon glyphicon-question-sign"></span></a>
+  </div>
+{% endblock %}
+
+{% block app_content %}
+  {% gizmo select_region %}
+  {% gizmo select_input toggle_region %}
+  <h1>Select Major Aquifer Properties</h1>
+  <h6>Use the dropdown menus below to select the appropriate properties from you uploaded Major aquifer JSON file to be used in the app.</h6>
+  {% gizmo select_units %}
+  {% gizmo table_view_aq %}
+  {% gizmo select_AquiferID %}
+  {% gizmo select_DisplayName %}
+  {% gizmo select_Aquifer_Name %}
+  {% gizmo select_porosity %}
+  <input type="hidden" id="showminor" value="{{ displayminor }}">
+  <input type="hidden" id="latlon" value="{{ csvfile }}">
+  {% if displayminor %}
+    <h1>Select Minor Aquifer Properties</h1>
+    <h6>Use the dropdown menus below to select the appropriate properties from you uploaded Minor aquifer JSON file to be used in the app.</h6>
+    {% gizmo minor_table_view_aq %}
+    {% gizmo select_minor_AquiferID %}
+    {% gizmo select_minor_DisplayName %}
+    {% gizmo select_minor_Aquifer_Name %}
+    {% gizmo select_minor_porosity %}
+  {% endif %}
+  <h1>Select Well Properties</h1>
+  <h6>Use the dropdown menus below to select the appropriate properties from you uploaded well JSON file to be used in the app.</h6>
+  {% gizmo table_view %}
+  {% if csvfile %}
+    {% gizmo select_lat %}
+    {% gizmo select_lon %}
+  {% endif %}
+  {% gizmo select_hydroid %}
+  {% gizmo select_aqid %}
+  {% gizmo select_elev %}
+  {% gizmo select_type %}
+  {% gizmo select_depth %}
+{% endblock %}
+
+
+{% block after_app_content %}
+
+{% endblock %}
+
+
+
+
+{% block app_actions %}
+  {% gizmo add_button %}
+{% endblock %}
