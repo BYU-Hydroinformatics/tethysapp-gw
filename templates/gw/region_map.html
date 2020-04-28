@@ -1,0 +1,238 @@
+{% extends "gw/base.html" %}
+{% load tethys_gizmos %}
+{% load staticfiles %}
+
+{% block header_buttons %}
+  <div class="header-button glyphicon-button" data-toggle="tooltip" data-placement="bottom" title="Help">
+    <a data-toggle="modal" data-target="#help-modal"><span class="glyphicon glyphicon-question-sign"></span></a>
+  </div>
+{% endblock %}
+
+{% block app_content %}
+<html>
+    <head>
+        <style>
+        .greywell {
+            height: 5px;
+            width: 5px;
+            background-color: #8d8d8d;
+            border-radius: 50%;
+            display: inline-block;
+            vertical-align: middle;
+            text-align:middle;
+        }
+        .bluewell{
+            height: 10px;
+            width: 10px;
+            background-color: #0000ff;
+            border-radius: 50%;
+            display: inline-block;
+            vertical-align: middle;
+            text-align:middle;
+        }
+        .greenwell{
+            height: 10px;
+            width: 10px;
+            background-color: #008000;
+            border-radius: 50%;
+            display: inline-block;
+            vertical-align: middle;
+            text-align:middle;
+        }
+        .redwell{
+            height: 5px;
+            width: 5px;
+            background-color: #ff0000;
+            border-radius: 50%;
+            display: inline-block;
+            vertical-align: middle;
+            text-align:middle;
+        }
+        .info_legend{
+            background-color: #FFFFFF;
+            padding: 3px;
+            box-shadow: 0 1px 7px rgba(0, 0, 0, 0.65);
+            border-radius: 4px;
+        }
+        </style>
+        <title>GRACE Data Viewer</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.css" />
+        <link rel="stylesheet" href="https://cdn.rawgit.com/socib/Leaflet.TimeDimension/master/dist/leaflet.timedimension.control.min.css" />
+    </head>
+    <body>
+        <span class="leg_min_max">
+            <span style="white-space:nowrap;float:left;">Map Height:
+                <select onchange="enlarge_map()" id="map_height">
+                        <option value="400px">400</option>
+                        <option selected="selected" value="500px">500</option>
+                        <option value="600px">600</option>
+                        <option value="700px">700</option>
+                        <option value="800px">800</option>
+                        <option value="900px">900</option>
+                </select> pixels
+            </span>
+                <span style="white-space:nowrap;float:right;">Select Symbology:
+                    <select onchange="updateWMS()" id="select_symbology">
+                        <option value="grace">GRACE</option>
+                        <option value="bluered">Red-Blue</option>
+                        <option value="greyscale">Grey Scale</option>
+                        <option value="alg2">alg2</option>
+                        <option value="sst_36">sst_36</option>
+                        <option value="rainbow">Rainbow</option>
+                    </select>
+                Min:
+                    <input type="number" name="leg_min" id="col_min" min="-50000" max="50000" step="10" value="-500" onchange=updateWMS()>
+                Max:
+                    <input type="number" name="leg_max" id="col_max" min="-50000" max="50000" step="10" value="0" onchange=updateWMS()>
+                Opacity:
+                    <input type="number" name="opacity" id="opacity_val" min="0.1" max="1" step="0.1" value="0.7" onchange=updateWMS()>
+                </span>
+        </span>
+        <div id="map" style="height: 500px; width: 100%"></div>
+        <span>
+            <span style="white-space:nowrap;float:left;">{% gizmo region_home %}
+                <span id="volbut" style="white-space:nowrap;float:right;">{% gizmo volume_button %}</span>
+            </span>
+            <span id="buttons" style="white-space:nowrap;float:right;">
+                <a name="btnUpload" class="btn btn-default" id="btnUpload" data-toggle="modal" data-target="#hydroshare-modal" role="button" >
+                    <span class="glyphicon hydroshare" aria-hidden="true"></span>
+                    <img src="/static/gw/images/hydroshare_logo.svg" class="button-icon" style="height:26px;width:26px"/>Upload to HydroShare
+                </a>
+                {% if user.is_superuser or user.is_staff %}{% gizmo delete_button %}{% gizmo default_button %}{% endif %}
+            </span>
+        </span>
+        <div id="chart" style="width: 100%; height: 400px; "></div>
+
+    </body>
+</html>
+{% endblock %}
+
+{% block app_navigation_items %}
+  {{ block.super }}
+    <br>
+    {% gizmo select_input select_region %}
+    {% gizmo select_input select_aquifer %}
+    {% gizmo select_input select_view %}
+    {% gizmo select_input available_dates %}
+    {% gizmo select_input required_data %}
+    <!--<p>Minimum Samples per Well</p><input type="number"  name="required_data" id="required_data" min="0" max="50" step="1" value="2" >-->
+    <div id="waiting_output"></div><br>
+
+{% endblock %}
+
+
+{% block after_app_content %}
+  <!-- Help Modal -->
+  <div class="modal fade" id="help-modal" tabindex="-1" role="dialog" aria-labelledby="help-modal-label">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h5 class="modal-title" id="help-modal-label">Instructions</h5>
+        </div>
+        <div class="modal-body">
+          <h2>Select Region</h2>
+          <ul>
+            <li>Click the "Select Region" dropdown and select the region of interest. The map will display the region and its aquifers.</li>
+          </ul>
+          <h2>Select Aquifer</h2>
+          <ul>
+            <li>Click the "Select Aquifer" dropdown and select the desired aquifer, or click on an aquifer in the map interface. The data for the specified aquifer will appear on the map.</li>
+          </ul>
+          <h2>Specify Required Data</h2>
+          <ul>
+            <li>Select the interpolation method for the interpolated water level surface.</li>
+            <li>Select the data type to display: Depth to Groundwater, Elevation of Groundwater, or Well Drawdown.</li>
+            <li>Slect the raster animation to display for the specified aquifer.</li>
+            <li>Adjust the slider below the heading "Minimum Samples per Well"</li>
+            <li>This slider adjusts how many wells will be dislayed. Only wells with at least the minimum specified number of samples will be mapped.</li>
+          </ul>
+          <h2>Click on individual wells</h2>
+          <ul>
+            <li>When clicked, each well will display timeseries data and well metadata.</li>
+          </ul>
+          <h2>Display Surface</h2>
+          <ul>
+            <li>Use the slider at the bottom of the map to view the interpolated surface at different timesteps.</li>
+          </ul>
+          <h2>Adjust Symbology</h2>
+          <ul>
+            <li>Use the menu in the top right corner to adjust visisbility of map elements.</li>
+            <li>Use the inputs in the top right to adjust the symbology of the raster animation.</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+    <div class="modal fade" id="hydroshare-modal" tabindex="-1" role="dialog" aria-labelledby="AddHydroshareResource">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h6 class="modal-title">Upload File to HydroShare as a Resource(*Required)</h6>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="resource-title" class="control-label">*Resource Title:</label>
+                        <input type="text" class="form-control" id="resource-title">
+                    </div>
+                    <div class="form-group">
+                        <label for="resource-type" class="control-label">*Resource Type:</label>
+                        <select class="form-control" id="resource-type">
+                            <option>GenericResource</option>
+                            <!--<option>Geographic Raster</option>-->
+                            <!--<option>HIS Referenced Time Series</option>-->
+                            <!--<option>Model Program</option>-->
+                            <!--<option>Model Instance</option>-->
+                            <!--<option>Multidimensional (NetCDF)</option>-->
+                            <!--<option>Time Series</option>-->
+                            <!--<option>Application</option>-->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="resource-abstract" class="control-label">*Resource Abstract:</label>
+                        <textarea rows="6" cols="50" id="resource-abstract" class="form-control"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="resource-keywords" class="control-label">*Resource Keywords:</label>
+                        <input type="text" class="form-control" id="resource-keywords">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div id="display-status" class="col-md-8"></div>
+                    <div id="footer-buttons" class="col-md-4">
+                        <button type="button" class="btn btn-default footer" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary footer" id="hydroshare-proceed">Proceed</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{ block.super }}
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.js"></script>
+    <script type="text/javascript" src="https://cdn.rawgit.com/nezasa/iso8601-js-period/master/iso8601.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js"></script>
+    <script type="text/javascript" src="https://cdn.rawgit.com/nezasa/iso8601-js-period/master/iso8601.min.js"></script>
+    <script type="text/javascript" src="https://cdn.rawgit.com/socib/Leaflet.TimeDimension/master/dist/leaflet.timedimension.min.js"></script>
+    <script type="text/javascript" src="{% static 'gw/js/region_map.js' %}"></script>
+    <script src="https://code.highcharts.com/modules/series-label.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+
+{% endblock %}
+
+{% block app_actions %}
+
+{% endblock %}

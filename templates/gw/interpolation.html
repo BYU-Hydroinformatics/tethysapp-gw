@@ -1,0 +1,86 @@
+{% extends "gw/base.html" %}
+{% load tethys_gizmos %}
+{% load staticfiles %}
+
+{% block header_buttons %}
+  <div class="header-button glyphicon-button" data-toggle="tooltip" data-placement="bottom" title="Help">
+    <a data-toggle="modal" data-target="#help-modal"><span class="glyphicon glyphicon-question-sign"></span></a>
+  </div>
+{% endblock %}
+
+{% block app_content %}
+  <h1>Interpolation Wizard</h1>
+  <p>This Wizard allows you to adjust interpolation settings and interpolate water levels</p>
+    {% gizmo select_input select_units %}
+    {% gizmo select_input select_region %}
+    {% gizmo select_input select_aquifer %}
+    {% gizmo select_porosity %}
+    {% gizmo select_input start_date %}
+    {% gizmo select_input end_date %}
+    {% gizmo select_input frequency %}
+    {% gizmo select_input resolution %}
+    {% gizmo select_input select_interpolation %}
+    {% gizmo select_input interpolation_options %}
+    {% gizmo select_input temporal_interpolation %}
+    {% gizmo select_input min_samples %}
+    {% gizmo select_input min_ratio %}
+    {% gizmo select_input time_tolerance %}
+    {% gizmo select_input default %}
+    {% gizmo submit_button %}
+    <div id="chart" style="width: 100%; height: 100px; "></div>
+
+    <script type="text/javascript" src="{% static 'gw/js/interpolation.js' %}"></script>
+{% endblock %}
+
+{% block app_navigation_items %}
+  {{ block.super }}
+    <div id="waiting_output"></div><br>
+{% endblock %}
+
+
+{% block after_app_content %}
+  <!-- Help Modal -->
+  <div class="modal fade" id="help-modal" tabindex="-1" role="dialog" aria-labelledby="help-modal-label">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h5 class="modal-title" id="help-modal-label">Instructions</h5>
+        </div>
+        <div class="modal-body">
+          <h3>Select Region</h3>
+          <ul>
+            <li>Click the "Select Region" dropdown and select the region of interest. The Select Aquifer dropdown will populate with the appropriate entries.</li>
+          </ul>
+          <h3>Select Aquifer</h3>
+          <ul>
+            <li>Click the "Select Aquifer" dropdown and select the desired aquifer, or choose all aquifers.</li>
+          </ul>
+          <h3>Specify Start Date, End Date, and Time Increment</h3>
+          <ul>
+            <li>The Wizard will create a raster animation for the specified years</li>
+          </ul>
+          <h3>Specify Raster Resolution</h3>
+          <ul>
+            <li>The Wizard will create a raster animation with the specified resolution</li>
+          </ul>
+          <h3>Specify Interpolation Method and Options</h3>
+          <ul>
+            <li>The interpolation process will only use data from wells with the minimum number of water samples, with timeseries data spanning at least the specified percentage of the chosen time frame.</li>
+            <li>The interpolation process wil extrapolate time series data within the specified tolerance of the Temporal Extrapolation Limit.</li>
+          </ul>
+          <h3>Specify whether to set this animation as the default animation for the aquifer.</h3>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+
+{% block app_actions %}
+
+{% endblock %}
