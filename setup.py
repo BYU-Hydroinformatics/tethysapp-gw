@@ -1,7 +1,6 @@
-import os
-import sys
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 from tethys_apps.app_installation import find_resource_files
+
 
 ### Apps Definition ###
 app_package = 'gw'
